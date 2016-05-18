@@ -24,9 +24,6 @@ def quant_pags():
 
 
 def get_posts_links(i):
-    """
-    Returns an iterator with the a tags with the titles
-    """
     html = urlopen("http://patft.uspto.gov/netacgi/nph-Parser?Sect1=PTO2&Sect2=HITOFF&u=%2Fnetahtml%2FPTO%2Fsearch-adv.htm&r=0&f=S&l=50&d=PTXT&OS=facebook&RS=facebook&Query=facebook&TD=7157&Srch1=facebook&NextList"+str(i)+"=Next+50+Hits")
     soup = BeautifulSoup(html,"html5lib")
     return soup.findAll('a')
@@ -57,14 +54,14 @@ quant_pags = quant_pags()
 data = []
 for i in range(quant_pags):
     verify = 1
-    posts = get_posts_links(i)
+    posts = get_posts_links(i+1)
     for link in posts:
         if 'href' in link.attrs and 'd=PTXT' in link.attrs['href'] and 'Page=Prev' not in link.attrs['href'] and 'Page=Next' not in link.attrs['href']:
             if verify % 2 == 0:
                 post_data = extract_data_from_link(link)
                 data.append(post_data)
-                creates_output_file(data,i)
+                creates_output_file(data,i+1)
                 data.clear()
-            verify = verify + 1
+            verify = verify + 1   
 
      
