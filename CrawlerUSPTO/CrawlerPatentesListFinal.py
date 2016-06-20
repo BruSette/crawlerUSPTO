@@ -80,9 +80,10 @@ def creates_output_file(data, i):
 """
 quant_pags = quant_pags()
 data = []
+allLinks = set()
 for i in range(quant_pags):
     """
-        VARIÁVEL DE VERIFICAÇÃO (IDENTIFICAR SE STAMOS NO HREF CONTENTO O TITULO OU O CODIGO DA PATENTE)
+        VARIÁVEL DE VERIFICAÇÃO (IDENTIFICAR SE ESTAMOS NO HREF CONTENTO O TITULO OU O CODIGO DA PATENTE)
     """
     verify = 1
     posts = get_posts_links(i)
@@ -101,6 +102,8 @@ for i in range(quant_pags):
                 creates_output_file(data,i)
                 data.clear()
             verify = verify + 1
-
+            
+            if link not in allLinks:
+                allLinks.add(link)
 
      
