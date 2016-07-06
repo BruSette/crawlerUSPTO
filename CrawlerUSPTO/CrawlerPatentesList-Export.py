@@ -1,4 +1,4 @@
-https://github.com/BruSette/crawlerUSPTO/tree/master/CrawlerUSPTO
+
 from urllib.request import urlopen
 import os
 from bs4 import BeautifulSoup
@@ -46,6 +46,15 @@ def extract_data_from_link(post_link_tag):
         'title': post_link_tag.getText(),
     }
 
+
+def extract_pag_patent(link_patent,patnum):
+    html = urlopen("http://patft.uspto.gov" + link_patent.attrs['href'])
+    soup = BeautifulSoup(html,"html5lib")
+    arq = open(patnum + ".html", "w")
+    arq.write(str(soup))
+    '''print(soup)'''
+
+
 def extract_patnum_from_link(post_link_tag):
     """
         EXTRAE O CÓDIGO DA PATENTE
@@ -55,11 +64,11 @@ def extract_patnum_from_link(post_link_tag):
     }
 
 
-def creates_output_file(data, i):
+def creates_output_file(data, i,patnum):
     """
         CRIA UM ARQUIVO JSON DE SAIDA PARA CADA PATENTE ENCONTRADA
     """
-    file_path = os.path.join(os.path.dirname(__file__), 'out'+str(i)+'.json')
+    file_path = os.path.join(os.path.dirname(__file__), patnum+'.json')
     with open(file_path, 'w') as fp:
         json_data = json.dumps(data)
         fp.write(json_data)
@@ -84,13 +93,16 @@ for i in range(quant_pags):
         if 'href' in link.attrs and 'd=PTXT' in link.attrs['href'] and 'Page=Prev' not in link.attrs['href'] and 'Page=Next' not in link.attrs['href']:
             if verify % 2 == 1:
                 post_data = extract_patnum_from_link(link)
+                patnum = post_data['patnum']
                 data.append(post_data)
+                
                 
             if verify % 2 == 0:
                 post_data = extract_data_from_link(link)
                 data.append(post_data)
-                creates_output_file(data,i)     
+                creates_output_file(data,i,patnum)
                 data.clear()
+                extract_pag_patent(link,patnum)
             verify = verify + 1
             
             if link not in allLinks:
