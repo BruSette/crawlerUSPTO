@@ -50,9 +50,9 @@ def extract_data_from_link(post_link_tag):
 def extract_pag_patent(link_patent,patnum):
     html = urlopen("http://patft.uspto.gov" + link_patent.attrs['href'])
     soup = BeautifulSoup(html,"html5lib")
-    arq = open(patnum + ".html", "w")
-    arq.write(str(soup))
-    '''print(soup)'''
+    file_path = os.path.join(os.path.dirname(__file__)+"/saida", patnum+'.html')
+    with open(file_path, "w") as fp:
+        fp.write(str(soup))
 
 
 def extract_patnum_from_link(post_link_tag):
@@ -68,7 +68,7 @@ def creates_output_file(data, i,patnum):
     """
         CRIA UM ARQUIVO JSON DE SAIDA PARA CADA PATENTE ENCONTRADA
     """
-    file_path = os.path.join(os.path.dirname(__file__), patnum+'.json')
+    file_path = os.path.join(os.path.dirname(__file__)+"/saida", patnum+'.json')
     with open(file_path, 'w') as fp:
         json_data = json.dumps(data)
         fp.write(json_data)
