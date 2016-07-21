@@ -3,6 +3,7 @@ from urllib.request import urlopen
 import os
 from bs4 import BeautifulSoup
 import json
+from nltk import *
 
 """
 DEFINE UMA VARIÁVEL INICIAL PARA A URL
@@ -10,6 +11,8 @@ DEFINE UMA VARIÁVEL INICIAL PARA A URL
 START_URL = ("http://patft.uspto.gov/netacgi/nph-Parser?Sect1=PTO2"+
             "&Sect2=HITOFF&p=1&u=%2Fnetahtml%2FPTO%2Fsearch-bool.html"+
             "&r=0&f=S&l=50&TERM1=facebook&FIELD1=&co1=AND&TERM2=&FIELD2=&d=PTXT")
+
+patentesNum = []
 
 def quant_pags():
     """
@@ -46,15 +49,26 @@ def extract_data_from_link(post_link_tag):
         'title': post_link_tag.getText(),
     }
 
-
+"""
+    Gera um arquivo de saida do tipo HTML com os dados pertinentes da respecitiva patente
+"""
 def extract_pag_patent(link_patent,patnum):
     html = urlopen("http://patft.uspto.gov" + link_patent.attrs['href'])
     soup = BeautifulSoup(html,"html5lib")
     file_path = os.path.join(os.path.dirname(__file__)+"/saida", patnum+'.html')
     with open(file_path, "w") as fp:
         fp.write(str(soup))
+        
+    patentesNum.append(patnum+ "\n")    
+    file_path = os.path.join(os.path.dirname(__file__)+"/saida", 'patentes.txt')
+    with open(file_path, "w") as fp:
+        fp.writelines(patentesNum)
+    
+    fp.close()
 
-
+"""
+    Retorna o numero da patente passada por parametro
+"""
 def extract_patnum_from_link(post_link_tag):
     """
         EXTRAE O CÓDIGO DA PATENTE
@@ -95,8 +109,7 @@ for i in range(quant_pags):
                 post_data = extract_patnum_from_link(link)
                 patnum = post_data['patnum']
                 data.append(post_data)
-                
-                
+            
             if verify % 2 == 0:
                 post_data = extract_data_from_link(link)
                 data.append(post_data)
