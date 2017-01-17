@@ -19,13 +19,20 @@ client = MongoClient()
 
 db_1 = client.patentes
 
+postCol_1 = db_1.uspto
+
 
 def quant_pags():
     """
         FUNÇÃO QUE PEGA VIA CRAWLER A QUANTIDADE DE PÁGINAS A SEREM EXPLORADAS PELO ALGORITMO
     """
-    html = urlopen(START_URL)
-    bsObj = BeautifulSoup(html,"lxml")
+    try:
+        html = urlopen(START_URL)
+        bsObj = BeautifulSoup(html,"lxml")
+    except:
+        print("Erro ao calcular quantidade de páginas")
+        return quant_pags()
+
     """
         A QUANTIDADE DE PÁGINAS ENCONTRA-SE NA SEGUNDA TAG STRONG DO CORPO DO SITE
     """
@@ -38,11 +45,13 @@ def quant_pags():
 
 def get_posts_links(i):
 
-    html = urlopen("http://patft.uspto.gov/netacgi/nph-Parser?Sect1=PTO2"+
-                   "&Sect2=HITOFF&u=%2Fnetahtml%2FPTO%2Fsearch-adv.htm"+
-                   "&r=0&f=S&l=50&d=PTXT&OS=mobile&RS=mobile&Query=mobile&TD=7220&"+
-                   "Srch1=mobile&NextList"+str(i)+"=Next+50+Hits")
-    soup = BeautifulSoup(html,"lxml")
+    try:
+        html = urlopen("http://patft.uspto.gov/netacgi/nph-Parser?Sect1=PTO2&Sect2=HITOFF&u=%2Fnetahtml%2FPTO%2Fsearch-adv.htm&r=0&f=S&l=50&d=PTXT&OS=mobile&RS=mobile&Query=mobile&Srch1=mobile&NextList"+str(i)+"=Next+50+Hits")
+        soup = BeautifulSoup(html,"lxml")
+    except:
+        print("Sem conexão.")
+        return get_posts_links(i)
+
     return soup.findAll('a')
 
 
@@ -60,28 +69,30 @@ def extract_data_from_link(post_link_tag):
 """
 def extract_pag_patent(link_patent,patnum,mongo):
 
-    html = urlopen("http://patft.uspto.gov" + link_patent.attrs['href'])
-    '''soup = BeautifulSoup(html,"html5lib")'''
-    '''Caso necessite de tokenização para conversao em NLTK'''
-    soup = BeautifulSoup(html,"lxml").getText()
-    '''soup = nltk.word_tokenize(soup)'''
-    '''Deixa todo o texto em letras misnusculas'''
+    try:
+        html = urlopen("http://patft.uspto.gov" + link_patent.attrs['href'])
+        '''soup = BeautifulSoup(html,"html5lib")'''
+        '''Caso necessite de tokenização para conversao em NLTK'''
+        soup = BeautifulSoup(html,"lxml").getText()
+        '''soup = nltk.word_tokenize(soup)'''
+        '''Deixa todo o texto em letras misnusculas'''
+    except:
+        print("Sem conexão.")
+        return extract_pag_patent(link_patent,patnum,mongo) 
+        
 
     soup = str(soup).lower()
     soup = str(soup).replace("\n", "")
     soup = str(soup).replace("\s", " ")
 
-    #extrair aqui o description
+    #extrai o description
     pat = soup[soup.find("description"):soup.find("* * * * *")]
     #print(pat)
 
-    postCol_1 = db_1.uspto
-
-
-    #inserir aqui os dados no MONGODB
     mongo.update(extract_text(soup))
     mongo.update(extract_description(pat))
 
+    #Tenta inserir uma patente no mongoDB
     try:
         postCol_1.insert(mongo)
     except Exception as e:
@@ -137,12 +148,17 @@ for i in range(quant_pags):
             if verify % 2 == 1:
                 post_data = extract_patnum_from_link(link)
                 patnum = post_data['_id']
-                mongo = extract_patnum_from_link(link)
+                print(patnum)
+                if not (postCol_1.find_one({"_id":patnum})):
+                    mongo = extract_patnum_from_link(link)
+                    print("sem correspondencia. Nova patente inserida")
+
 
             if verify % 2 == 0:
-                post_data = extract_data_from_link(link)
-                mongo.update(post_data)
-                extract_pag_patent(link,patnum,mongo)
+                if not (postCol_1.find_one({"_id":patnum})):
+                    post_data = extract_data_from_link(link)
+                    mongo.update(post_data)
+                    extract_pag_patent(link,patnum,mongo)
             verify = verify + 1
 
             if link not in allLinks:
