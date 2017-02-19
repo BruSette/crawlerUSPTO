@@ -1,2 +1,2 @@
 # crawlerUSPTO
-Python crawler algorithms in USPTO
+Python crawler algorithms for USPTO
